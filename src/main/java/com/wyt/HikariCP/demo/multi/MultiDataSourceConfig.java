@@ -1,5 +1,6 @@
 package com.wyt.HikariCP.demo.multi;
 
+import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import lombok.Setter;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties;
@@ -14,16 +15,17 @@ import org.springframework.util.StringUtils;
 import javax.sql.DataSource;
 import java.util.Properties;
 
-@PropertySource("classpath:")
+@PropertySource("classpath:mysql.properties")
 @Configuration
-//@ConfigurationProperties("dataSource")
+@ConfigurationProperties(prefix = "spring.datasource")
 //@ConditionalOnProperty(name = "dataSource", havingValue = "true")
 @Setter
 public class MultiDataSourceConfig {
     private String driver;
     private String url;
-    private String route2all;
-    private String className;
+    private String username;
+    private String password;
+    private String type;
     private String minConnection;
     private String MaxConnection;
     private String checkoutTimeoutMilliSec;
@@ -33,65 +35,41 @@ public class MultiDataSourceConfig {
     private String sql;
     private String maximumPoolSize;
     private String connectionTimeout;
-    private DataSource dataSource(){
-        DriverManagerDataSource dataSource = new DriverManagerDataSource();
-        dataSource.setDriverClassName(this.driver);
-        dataSource.setUrl(url);
-        dataSource.setConnectionProperties(new Properties());
-        Properties properties = dataSource.getConnectionProperties();
-        properties.setProperty("driver-class-name",className);
-        properties.setProperty("driver-class-name",className);
-        properties.setProperty("driver-class-name",className);
-        properties.setProperty("driver-class-name",className);
-        properties.setProperty("driver-class-name",className);
-        return dataSource;
-    }
-    /**
-     * 创建 HikariDataSource 数据源
-     *
-     * @param properties 参数
-     * @return 数据源
-     */
-    private static HikariDataSource createHikariDataSource(DataSourceProperties properties) {
-        HikariDataSource dataSource = createHikariDataSource(properties, HikariDataSource.class);
-        if (StringUtils.hasText(properties.getName())) {
-            dataSource.setPoolName(properties.getName());
-        }
-        return dataSource;
-    }
+
 
     @Bean
     @Primary
     public MultiDsPoolManager multiDsPoolManager(){
         MultiDsPoolManager manager = new MultiDsPoolManager();
-        manager.setDefaultDataSource(dataSourceOne(dataSourcePropertiesOne()));
+        manager.setDefaultDataSource(dataSourceOne(hikariConfig()));
         return manager;
     }
-    @ConfigurationProperties("spring.datasource")
-    public DataSourceProperties dataSourcePropertiesOne() {
-        return new DataSourceProperties();
+    private DataSource dataSource(){
+        DriverManagerDataSource dataSource = new DriverManagerDataSource();
+        dataSource.setDriverClassName(this.driver);
+        dataSource.setUrl(url);
+        dataSource.setUsername(username);
+        dataSource.setPassword(password);
+//        dataSource.setConnectionProperties(new Properties());
+//        Properties properties = dataSource.getConnectionProperties();
+//        properties.setProperty("driver-class-name",driver);
+        return dataSource;
     }
 
-    @ConfigurationProperties("spring.datasource")
-    public HikariDataSource dataSourceOne(DataSourceProperties properties) {
-        return createHikariDataSource(properties);
+    public HikariConfig hikariConfig() {
+        HikariConfig hikariConfig = new HikariConfig();
+        hikariConfig.setDataSourceClassName("com.zaxxer.hikari.HikariDataSource");
+        hikariConfig.setDataSource(dataSource());
+//        hikariConfig.addDataSourceProperty("userName",this.username);
+//        hikariConfig.addDataSourceProperty("password",this.password);
+//        hikariConfig.addDataSourceProperty("maxPoolSize",this.maximumPoolSize);
+//        hikariConfig.addDataSourceProperty("password",this.password);
+//        hikariConfig.addDataSourceProperty("password",this.password);
+//        hikariConfig.addDataSourceProperty("password",this.password);
+        return hikariConfig;
     }
 
-//    @Bean
-//    @ConfigurationProperties("spring.datasource")
-//    public DataSourceProperties dataSourcePropertiesTwo() {
-//        return new DataSourceProperties();
-//    }
-
-//    @Bean
-//    @ConfigurationProperties("spring.datasource.two.hikari")
-//    public HikariDataSource dataSourceTwo(@Qualifier("dataSourcePropertiesTwo") DataSourceProperties properties) {
-//        return createHikariDataSource(properties);
-//    }
-
-
-    @SuppressWarnings("unchecked")
-    private static <T> T createHikariDataSource(DataSourceProperties properties, Class<? extends DataSource> type) {
-        return (T) properties.initializeDataSourceBuilder().type(type).build();
+    public HikariDataSource dataSourceOne(HikariConfig config) {
+        return new HikariDataSource(config);
     }
 }

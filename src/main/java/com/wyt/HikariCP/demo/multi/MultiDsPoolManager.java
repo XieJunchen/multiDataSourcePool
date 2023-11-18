@@ -5,6 +5,8 @@ import com.zaxxer.hikari.HikariConfigMXBean;
 import com.zaxxer.hikari.HikariDataSource;
 import com.zaxxer.hikari.HikariPoolMXBean;
 import com.zaxxer.hikari.metrics.MetricsTrackerFactory;
+import org.apache.ibatis.util.MapUtil;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,6 +15,7 @@ import java.io.PrintWriter;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class MultiDsPoolManager implements AbstractMultiPoolManager {
@@ -20,11 +23,11 @@ public class MultiDsPoolManager implements AbstractMultiPoolManager {
     /**
      * 默认连接池
      */
-    private DataSource defaultDataSource;
+    private HikariDataSource defaultDataSource;
     /**
      * 数据源配置
      */
-    private MultiDataSourceConfig dataSourceConfig;
+    private MultiDataSourceConfig multiDataSourceConfig;
     /**
      * 连接池集合
      */
@@ -33,21 +36,59 @@ public class MultiDsPoolManager implements AbstractMultiPoolManager {
     public MultiDsPoolManager() {
         this.defaultDataSource = null;
     }
-    public void setDefaultDataSource(DataSource dataSource) {
+    public void setDefaultDataSource(HikariDataSource dataSource) {
         this.defaultDataSource = dataSource;
     }
 
     public DataSource getDataSource() {
-        DataSource dataSource = null;
-        synchronized (pools) {
-            if (pools.size() == 0) {
-                // todo
-                dataSource = new HikariDataSource();
-                pools.put("master",dataSource);
+        if (pools.isEmpty()){
+            synchronized (pools) {
+                if (pools.isEmpty()){
+                    LOGGER.info("当前连接池为空，开始初始化连接池。");
+                    HikariDataSource source = new HikariDataSource(copyConfigFromDefault());
+                    pools.put("master",source);
+                }
             }
         }
-        dataSource = pools.get("master");
-        return dataSource;
+        DataSource dataSource = pools.get("master");
+        return Objects.isNull(dataSource) ? defaultDataSource : dataSource ;
+    }
+
+    @NotNull
+    private HikariConfig copyConfigFromDefault() {
+        HikariConfig config = new HikariConfig();
+        config.setAutoCommit(defaultDataSource.isAutoCommit());
+        config.setCatalog(defaultDataSource.getCatalog());
+        config.setConnectionInitSql(defaultDataSource.getConnectionInitSql());
+        config.setConnectionTimeout(defaultDataSource.getConnectionTimeout());
+        config.setDataSource(defaultDataSource.getDataSource());
+//        config.setDriverClassName(defaultDataSource.getDriverClassName());
+        config.setDataSourceClassName(defaultDataSource.getDataSourceClassName());
+        config.setDataSourceJNDI(defaultDataSource.getDataSourceJNDI());
+        config.setDataSourceProperties(defaultDataSource.getDataSourceProperties());
+        config.setAllowPoolSuspension(defaultDataSource.isAllowPoolSuspension());
+//        config.setExceptionOverrideClassName(defaultDataSource.getExceptionOverrideClassName());
+        config.setHealthCheckRegistry(defaultDataSource.getHealthCheckRegistry());
+        config.setHealthCheckProperties(defaultDataSource.getHealthCheckProperties());
+        config.setIdleTimeout(defaultDataSource.getIdleTimeout());
+        config.setInitializationFailTimeout(defaultDataSource.getInitializationFailTimeout());
+        config.setIsolateInternalQueries(defaultDataSource.isIsolateInternalQueries());
+        config.setJdbcUrl(defaultDataSource.getJdbcUrl());
+        config.setKeepaliveTime(defaultDataSource.getKeepaliveTime());
+        config.setLeakDetectionThreshold(defaultDataSource.getLeakDetectionThreshold());
+        config.setMaximumPoolSize(defaultDataSource.getMaximumPoolSize());
+        config.setMetricRegistry(defaultDataSource.getMetricRegistry());
+        config.setMetricsTrackerFactory(defaultDataSource.getMetricsTrackerFactory());
+        config.setMaxLifetime(defaultDataSource.getMaxLifetime());
+        config.setMinimumIdle(defaultDataSource.getMinimumIdle());
+        config.setPassword(defaultDataSource.getPassword());
+        config.setSchema(defaultDataSource.getSchema());
+        config.setScheduledExecutor(defaultDataSource.getScheduledExecutor());
+        config.setThreadFactory(defaultDataSource.getThreadFactory());
+        config.setTransactionIsolation(defaultDataSource.getTransactionIsolation());
+        config.setUsername(defaultDataSource.getUsername());
+        config.setValidationTimeout(defaultDataSource.getValidationTimeout());
+        return config;
     }
 
     @Override

@@ -1,6 +1,11 @@
 spring:
   application: test
   # datasource 数据源配置内容，对应 DataSourceProperties 配置属性类
+  ## h2 内存数据库
+  #  datasource:
+  #    driver-class-name: org.h2.Driver
+  #    username: root
+  #    password: test
   datasource:
     ##type: com.wyt.HikariCP.demo.multi.MultiDsPoolManager
     url: jdbc:mysql://127.0.0.1:3306/test?useSSL=false&useUnicode=true&characterEncoding=UTF-8
@@ -9,19 +14,20 @@ spring:
     password: 123456
     # HikariCP 自定义配置，对应 HikariConfig 配置属性类
     hikari:
-      minimum-idle: 20 # 池中维护的最小空闲连接数，默认为 10 个。
-      maximum-pool-size: 20 # 池中最大连接数，包括闲置和使用中的连接，默认为 10 个。
+      # 池中维护的最小空闲连接数，默认为 10 个。
+      minimum-idle: 20
+      # 池中最大连接数，包括闲置和使用中的连接，默认为 10 个。
+      maximum-pool-size: 20
+      # 一个连接idle状态的最大时长（毫秒），超时则被释放（retired），默认:10分钟
       idle-timeout: 500000
+      # 等待连接池分配连接的最大时长（毫秒），超过这个时长还没可用的连接则发生SQLException， 默认:30秒
       connection-timeout: 60000
+      # 一个连接的生命时长（毫秒），超时而且没被使用则被释放（retired），默认:30分钟 1800000ms，建议设置比数据库超时时长少60秒
       max-lifetime: 540000
 mybatis-plus:
     configuration:
       # 这个配置会将执行的sql打印出来，在开发或测试的时候可以用
       log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
-#  datasource:
-#    driver-class-name: org.h2.Driver
-#    username: root
-#    password: test
 #  sql:
 #    init:
 #      schema-locations: classpath:db/init.sql

@@ -25,6 +25,6 @@ public class ChatDetailController {
         detail.setId(companyId);
         detail = chatDetailMapper.selectById(detail);
         long end = System.currentTimeMillis();
-        return String.valueOf(detail.getName());
+        return String.valueOf(detail.toString());
     }
 }

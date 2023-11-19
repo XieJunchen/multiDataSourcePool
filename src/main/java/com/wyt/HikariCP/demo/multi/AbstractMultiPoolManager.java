@@ -9,15 +9,17 @@ import java.util.logging.Logger;
 public interface AbstractMultiPoolManager extends DataSource {
     @Override
      default PrintWriter getLogWriter() throws SQLException{
-        return null;
+        throw new UnsupportedOperationException("getLogWriter");
     };
 
     @Override
     default void setLogWriter(PrintWriter out) throws SQLException{
+        throw new UnsupportedOperationException("setLogWriter");
     }
 
     @Override
     default void setLoginTimeout(int seconds) throws SQLException{
+        throw new UnsupportedOperationException("setLoginTimeout");
     }
 
     @Override
@@ -27,16 +29,20 @@ public interface AbstractMultiPoolManager extends DataSource {
 
     @Override
     default  <T> T unwrap(Class<T> iface) throws SQLException{
-        return null;
+        if (iface.isInstance(this)) {
+            return (T) this;
+        } else {
+            throw new SQLException("DataSource of type [" + this.getClass().getName() + "] cannot be unwrapped as [" + iface.getName() + "]");
+        }
     }
 
     @Override
     default boolean isWrapperFor(Class<?> iface) throws SQLException{
-        return false;
+        return iface.isInstance(this);
     }
 
     @Override
     default Logger getParentLogger() throws SQLFeatureNotSupportedException{
-        return null;
+        return Logger.getLogger("AbstractMultiPoolManager");
     }
 }

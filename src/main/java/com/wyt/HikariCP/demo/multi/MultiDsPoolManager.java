@@ -5,7 +5,6 @@ import com.zaxxer.hikari.HikariConfigMXBean;
 import com.zaxxer.hikari.HikariDataSource;
 import com.zaxxer.hikari.HikariPoolMXBean;
 import com.zaxxer.hikari.metrics.MetricsTrackerFactory;
-import org.apache.ibatis.util.MapUtil;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,16 +17,13 @@ import java.sql.SQLFeatureNotSupportedException;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
+
 public class MultiDsPoolManager implements AbstractMultiPoolManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(MultiDsPoolManager.class);
     /**
      * 默认连接池
      */
     private HikariDataSource defaultDataSource;
-    /**
-     * 数据源配置
-     */
-    private MultiDataSourceConfig multiDataSourceConfig;
     /**
      * 连接池集合
      */
@@ -62,7 +58,7 @@ public class MultiDsPoolManager implements AbstractMultiPoolManager {
         config.setConnectionInitSql(defaultDataSource.getConnectionInitSql());
         config.setConnectionTimeout(defaultDataSource.getConnectionTimeout());
         config.setDataSource(defaultDataSource.getDataSource());
-//        config.setDriverClassName(defaultDataSource.getDriverClassName());
+        config.setDriverClassName(defaultDataSource.getDriverClassName());
         config.setDataSourceClassName(defaultDataSource.getDataSourceClassName());
         config.setDataSourceJNDI(defaultDataSource.getDataSourceJNDI());
         config.setDataSourceProperties(defaultDataSource.getDataSourceProperties());
@@ -178,7 +174,11 @@ public class MultiDsPoolManager implements AbstractMultiPoolManager {
         return dataSource.isClosed();
     }
 
+    @Override
     public String toString() {
-        return "DataSourcePoolManager";
+        return "MultiDsPoolManager{" +
+                "defaultDataSource=" + defaultDataSource.toString() +
+                ", pools=" + pools +
+                '}';
     }
 }

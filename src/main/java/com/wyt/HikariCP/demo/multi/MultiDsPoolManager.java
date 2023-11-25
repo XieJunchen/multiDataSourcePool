@@ -6,9 +6,11 @@ import com.zaxxer.hikari.HikariDataSource;
 import com.zaxxer.hikari.HikariPoolMXBean;
 import com.zaxxer.hikari.metrics.MetricsTrackerFactory;
 import org.jetbrains.annotations.NotNull;
+import org.junit.platform.commons.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Resource;
 import javax.sql.DataSource;
 import java.io.PrintWriter;
 import java.sql.Connection;
@@ -20,6 +22,9 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class MultiDsPoolManager implements AbstractMultiPoolManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(MultiDsPoolManager.class);
+    @Resource
+    private MultiDsPoolContext dsPoolContext;
+
     /**
      * 默认连接池
      */
@@ -37,6 +42,9 @@ public class MultiDsPoolManager implements AbstractMultiPoolManager {
     }
 
     public DataSource getDataSource() {
+        String poolName = dsPoolContext.getDataSourcePool();
+        poolName = StringUtils.isBlank(poolName) ? "master" : poolName;
+
         if (pools.isEmpty()){
             synchronized (pools) {
                 if (pools.isEmpty()){
@@ -46,7 +54,12 @@ public class MultiDsPoolManager implements AbstractMultiPoolManager {
                 }
             }
         }
-        DataSource dataSource = pools.get("master");
+        if (!pools.containsKey(poolName)){
+            HikariDataSource source = new HikariDataSource(copyConfigFromDefault());
+            pools.put(poolName, source);
+        }
+
+        DataSource dataSource = pools.get(poolName);
         return Objects.isNull(dataSource) ? defaultDataSource : dataSource ;
     }
 
